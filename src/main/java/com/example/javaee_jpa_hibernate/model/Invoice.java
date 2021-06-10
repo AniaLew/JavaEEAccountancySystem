@@ -2,7 +2,6 @@ package com.example.javaee_jpa_hibernate.model;
 
 import com.example.javaee_jpa_hibernate.model.counterparty.Counterparty;
 import com.example.javaee_jpa_hibernate.model.invoice_item.InvoiceItem;
-import jakarta.persistence.Entity;
 
 import javax.json.bind.annotation.JsonbDateFormat;
 import javax.persistence.*;
@@ -35,20 +34,16 @@ public class Invoice implements Serializable, Comparable<Invoice> {
 
     public Invoice() {
     }
-
-    public Invoice(Long id, LocalDate date, Counterparty counterparty,
-                    List<InvoiceItem> invoiceItems) {
-        this.id = id;
-        this.date = date;
-        this.counterparty = counterparty;
-        this.invoiceItems = invoiceItems;
-    }
-
+    
     public Invoice(LocalDate date, Counterparty counterparty,
                     List<InvoiceItem> itemList) {
         this.date = date;
         this.counterparty = counterparty;
         this.invoiceItems = itemList;
+
+        for (InvoiceItem item: invoiceItems){
+            item.setInvoice(this);
+        }
     }
 
     public Long getId() {

@@ -5,7 +5,7 @@
              version="2.2">
     <persistence-unit name="Invoices">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-        <jar-file>my-entities.jar</jar-file>
+<!--        <jar-file>my-entities.jar</jar-file>-->
 <!--        <exclude-unlisted-classes>true</exclude-unlisted-classes>-->
 
         <class>com.example.javaee_jpa_hibernate.model.invoice_item.InvoiceItem</class>
