@@ -74,7 +74,6 @@ public class Invoice implements Serializable, Comparable<Invoice> {
         return invoiceItems;
     }
 
-
     public void setInvoiceItems(List<InvoiceItem> invoiceItems) {
         this.invoiceItems = invoiceItems;
     }
@@ -87,7 +86,6 @@ public class Invoice implements Serializable, Comparable<Invoice> {
         if (!(obj instanceof Invoice)) {
             return false;
         }
-
         Invoice invoice = (Invoice) obj;
 
         if (getId() != invoice.getId()) {
@@ -128,7 +126,6 @@ public class Invoice implements Serializable, Comparable<Invoice> {
         if (comparison > 0) {
             return 1;
         }
-
         return 0;
     }
 

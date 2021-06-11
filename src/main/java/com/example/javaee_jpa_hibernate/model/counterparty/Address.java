@@ -28,16 +28,13 @@ public class Address implements Serializable {
         return zipCode;
     }
 
-
     public String getTownName() {
         return townName;
     }
 
-
     public String getStreetName() {
         return streetName;
     }
-
 
     public String getHouseNumber() {
         return houseNumber;

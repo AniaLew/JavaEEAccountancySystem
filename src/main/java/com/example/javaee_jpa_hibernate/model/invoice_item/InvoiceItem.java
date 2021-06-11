@@ -32,9 +32,6 @@ public class InvoiceItem {
     private Vat vat = Vat.VAT_23;
 
     @ManyToOne
-//            (cascade = {CascadeType.DETACH,
-//            CascadeType.MERGE, CascadeType.PERSIST,
-//            CascadeType.REFRESH})
     @JoinColumn(name = "invoice_id", nullable = false)
     private Invoice invoice;
 
@@ -112,5 +109,4 @@ public class InvoiceItem {
                 + ", VAT = " + vat
                 + '}';
     }
-
 }

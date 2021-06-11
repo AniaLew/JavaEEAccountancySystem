@@ -1,11 +1,10 @@
 package com.example.javaee_jpa_hibernate;
 
 import com.example.javaee_jpa_hibernate.model.Invoice;
-import com.example.javaee_jpa_hibernate.model.InvoiceBuilder;
-import com.example.javaee_jpa_hibernate.model.counterparty.AddressBuilder;
+import com.example.javaee_jpa_hibernate.model.counterparty.Address;
 import com.example.javaee_jpa_hibernate.model.counterparty.Counterparty;
-import com.example.javaee_jpa_hibernate.model.counterparty.CounterpartyBuilder;
-import com.example.javaee_jpa_hibernate.model.invoice_item.InvoiceItemBuilder;
+import com.example.javaee_jpa_hibernate.model.invoice_item.InvoiceItem;
+import com.example.javaee_jpa_hibernate.model.invoice_item.Vat;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -14,34 +13,19 @@ import javax.persistence.Persistence;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        Counterparty counterparty = CounterpartyBuilder.builder()
-                .withCompanyName("LPT")
-                .withAddress(AddressBuilder.builder()
-                        .withZipCode("97-420")
-                        .withTownName("Lodz")
-                        .withStreetName("Piotrkowska")
-                        .withHouseNumber("34")
-                        .build())
-                .withPhoneNumber("345678912")
-                .withNIP("")
-                .withBankName("PKO")
-                .withBankNumber("2345")
-                .build();
-        Invoice invoice = InvoiceBuilder.builder()
-//                .withId(id)   unused property!
-                .withDate(LocalDate.now())
-                .withCounterparty(counterparty)
-                .withInvoiceItems(Arrays.asList(
-                        InvoiceItemBuilder.builder()
-                                .withDescription("Item1")
-                                .withAmount(BigDecimal.TEN)
-                                .withVatAmount(BigDecimal.ONE)
-                                .build()))
-                .build();
+        Address address = new Address("97-420", "Lodz", "Piotrkowska", "34");
 
+        Counterparty counterparty =  new Counterparty("LPT", address, "345678912",
+                "123456789", "PKO", "234");
+
+        List<InvoiceItem> invoiceItems = Arrays.asList(
+                new InvoiceItem("Item1", 1, BigDecimal.TEN, BigDecimal.ONE, Vat.VAT_23));
+
+        Invoice invoice = new Invoice(LocalDate.now(), counterparty, invoiceItems);
 
         EntityManagerFactory entityManagerFactory =
                 Persistence.createEntityManagerFactory("Invoices");
@@ -52,7 +36,6 @@ public class Main {
             entityManager.persist(counterparty);
             entityManager.persist(invoice);
             transaction.commit();
-
         } finally {
             if(transaction.isActive()) {
                 transaction.rollback();
@@ -60,6 +43,5 @@ public class Main {
             entityManager.close();
             entityManagerFactory.close();
         }
-
     }
 }
