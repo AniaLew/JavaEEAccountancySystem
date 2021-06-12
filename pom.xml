@@ -46,12 +46,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+<<<<<<< Updated upstream
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
+=======
+>>>>>>> Stashed changes
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>RELEASE</version>
