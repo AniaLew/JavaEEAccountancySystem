@@ -40,10 +40,6 @@ public class Invoice implements Serializable, Comparable<Invoice> {
         this.date = date;
         this.counterparty = counterparty;
         this.invoiceItems = itemList;
-
-        for (InvoiceItem item: invoiceItems){
-            item.setInvoice(this);
-        }
     }
 
     public Long getId() {

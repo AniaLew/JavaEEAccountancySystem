@@ -28,15 +28,8 @@ public class InvoiceItem {
     private BigDecimal vatAmount = new BigDecimal(0);
 
     @JoinColumn(name = "VAT", referencedColumnName = "VAT_CODE")
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     private Vat vat = Vat.VAT_23;
-
-    @ManyToOne
-//            (cascade = {CascadeType.DETACH,
-//            CascadeType.MERGE, CascadeType.PERSIST,
-//            CascadeType.REFRESH})
-    @JoinColumn(name = "invoice_id", nullable = false)
-    private Invoice invoice;
 
     public InvoiceItem(String description, int numberOfItems, BigDecimal amount,
                        BigDecimal vatAmount, Vat vat) {
@@ -48,14 +41,6 @@ public class InvoiceItem {
     }
 
     public InvoiceItem() {
-    }
-
-    public Invoice getInvoice() {
-        return invoice;
-    }
-
-    public void setInvoice(Invoice invoice) {
-        this.invoice = invoice;
     }
 
     public String getDescription() {
@@ -112,5 +97,4 @@ public class InvoiceItem {
                 + ", VAT = " + vat
                 + '}';
     }
-
 }
