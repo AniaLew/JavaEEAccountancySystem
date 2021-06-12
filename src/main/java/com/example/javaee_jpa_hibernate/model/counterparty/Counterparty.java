@@ -13,8 +13,6 @@ import java.util.List;
 public class Counterparty implements Serializable {
     @Id
     @Column(name = "COUNTERPARTY_ID")
-//    @GeneratedValue(strategy=GenerationType.SEQUENCE, generator="seq")
-//    @SequenceGenerator(name="seq", sequenceName="oracle_seq", allocationSize = 100)
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
@@ -73,7 +71,6 @@ public class Counterparty implements Serializable {
     public Address getAddress() {
         return address;
     }
-
 
     public String getBankName() {
         return bankName;

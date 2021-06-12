@@ -1,4 +1,7 @@
-package com.example.javaee_jpa_hibernate.model.counterparty;
+package com.example.javaee_jpa_hibernate.test_helper;
+
+import com.example.javaee_jpa_hibernate.model.counterparty.Address;
+import com.example.javaee_jpa_hibernate.model.counterparty.Counterparty;
 
 public class CounterpartyBuilder {
     private String companyName = "";
@@ -46,5 +49,3 @@ public class CounterpartyBuilder {
         return new Counterparty(companyName, address, phoneNumber, nip, bankName, bankNumber);
     }
 }
-
-

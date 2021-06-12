@@ -1,4 +1,7 @@
-package com.example.javaee_jpa_hibernate.model.invoice_item;
+package com.example.javaee_jpa_hibernate.test_helper;
+
+import com.example.javaee_jpa_hibernate.model.invoice_item.InvoiceItem;
+import com.example.javaee_jpa_hibernate.model.invoice_item.Vat;
 
 import java.math.BigDecimal;
 
@@ -39,5 +42,4 @@ public class InvoiceItemBuilder {
     public InvoiceItem build() {
         return new InvoiceItem(description, numberOfItems, amount, vatAmount, vat);
     }
-
 }
