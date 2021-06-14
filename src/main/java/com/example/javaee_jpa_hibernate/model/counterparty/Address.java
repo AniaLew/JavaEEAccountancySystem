@@ -5,13 +5,9 @@ import java.io.Serializable;
 
 @Embeddable
 public class Address implements Serializable {
-    @Column(name = "ZIP_CODE", nullable = false)
     private String zipCode;
-    @Column(name = "TOWN_NAME", nullable = false)
     private String townName;
-    @Column(name = "STREET_NAME", nullable = false)
     private String streetName;
-    @Column(name = "HOUSE_NAME")
     private String houseNumber;
 
     public Address(String zipCode, String townName, String streetName, String houseNumber) {

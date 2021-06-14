@@ -10,13 +10,15 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
+@Table(name = "invoices")
 public class Invoice implements Serializable, Comparable<Invoice> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "INVOICE_ID")
+    @Column(name = "invoice_id")
     private Long id;
 
     @FutureOrPresent(message = "Data must be in present or future")
@@ -24,22 +26,27 @@ public class Invoice implements Serializable, Comparable<Invoice> {
     @NotNull(message = "Date cannot be NULL")
     private LocalDate date = LocalDate.now();
 
-    @ManyToOne
-    @JoinColumn(name = "COUNTERPARTY_ID")
-    @NotNull(message = "Counterparty cannot be NULL")
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "company_id")
     private Counterparty counterparty;
 
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE,
+            CascadeType.REFRESH}, orphanRemoval = true)
+    @Column(name = "invoice_items", nullable = false)
+    @JoinTable
+//            (name = "invoice_Items",
+//            joinColumns = {@JoinColumn(name = "invoice_id")},
+//            inverseJoinColumns = {@JoinColumn(name = "item_id") })
     private List<InvoiceItem> invoiceItems;
 
     public Invoice() {
     }
     
     public Invoice(LocalDate date, Counterparty counterparty,
-                    List<InvoiceItem> itemList) {
+                    List<InvoiceItem> invoiceItems) {
         this.date = date;
         this.counterparty = counterparty;
-        this.invoiceItems = itemList;
+        this.invoiceItems = invoiceItems;
     }
 
     public Long getId() {
@@ -50,16 +57,12 @@ public class Invoice implements Serializable, Comparable<Invoice> {
         return date;
     }
 
-    public Counterparty getCounterparty() {
-        return counterparty;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public Counterparty getCounterparty() {
+        return counterparty;
     }
 
     public void setCounterparty(Counterparty counterparty) {
@@ -72,33 +75,6 @@ public class Invoice implements Serializable, Comparable<Invoice> {
 
     public void setInvoiceItems(List<InvoiceItem> invoiceItems) {
         this.invoiceItems = invoiceItems;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof Invoice)) {
-            return false;
-        }
-        Invoice invoice = (Invoice) obj;
-
-        if (getId() != invoice.getId()) {
-            return false;
-        }
-        if (!getDate().equals(invoice.getDate())) {
-            return false;
-        }
-        return getCounterparty().equals(invoice.getCounterparty());
-    }
-
-    @Override
-    public int hashCode() {
-        int result = Long.hashCode(getId());
-        result = 31 * result + getDate().hashCode();
-        result = 31 * result + getCounterparty().hashCode();
-        return result;
     }
 
     @Override
@@ -127,12 +103,30 @@ public class Invoice implements Serializable, Comparable<Invoice> {
 
     @Override
     public String toString() {
-        return "Invoice{"
-                + "id=" + id
-                + ", date=" + date
-                + ", counterparty='" + counterparty + '\''
-                + ", invoiceItems=" + invoiceItems
-                + '}';
+        return "Invoice{" +
+                "id=" + id +
+                ", date=" + date +
+                ", counterparty='" + counterparty + '\'' +
+                ", invoiceItems=" + invoiceItems +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Invoice)) return false;
+        Invoice invoice = (Invoice) o;
+        return getDate().equals(invoice.getDate())
+                && getCounterparty().equals(invoice.getCounterparty())
+                && getInvoiceItems().equals(invoice.getInvoiceItems());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getDate(), getCounterparty(), getInvoiceItems());
+    }
+
+    public void setId(Long id) {
     }
 }
 

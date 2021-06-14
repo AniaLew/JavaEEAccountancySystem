@@ -9,34 +9,34 @@ import java.io.Serializable;
 import java.util.List;
 
 @Entity
-@Table(name = "COUNTERPARTY")
 public class Counterparty implements Serializable {
     @Id
-    @Column(name = "COUNTERPARTY_ID")
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "company_id")
     private int id;
 
-    @Column(name = "NIP")
-    @NotEmpty(message = "NIP cannot be empty")
+    @Column(name = "nip", nullable = false, columnDefinition = "varchar(10) default '0000000000'")
     private String nip;
 
-    @Column(name = "COMPANY_NAME")
-    @NotEmpty(message = "NIP cannot be empty")
+    @Column(name = "company_name", nullable = false, columnDefinition = "varchar(50) default 'Company'")
     private String companyName;
 
-    @Column(name = "PHONE_NUMBER")
+    @Column(name = "phone_number",  nullable = true, columnDefinition = "varchar(20) default '0000000000'")
     private String phoneNumber;
 
-    @NotEmpty(message = "NIP cannot be empty")
-    @Column(name = "BANK_NAME")
+    @Column(name = "bank_name",  nullable = false, columnDefinition = "varchar(50) default 'Bank'")
     private String bankName;
 
-    @Column(name = "BANK_NUMBER")
+    @Column(name = "bank_number",  nullable = false, columnDefinition = "varchar(26) default '11111111111111111111111111'")
     @NotEmpty(message = "NIP cannot be empty")
     private String bankNumber;
 
     @Embedded
-    @NotNull(message = "Address cannot be NULL")
+    @NotNull(message = "Address cannot be null")
+    @AttributeOverride(name="zipCode", column = @Column(name="zip_code"))
+    @AttributeOverride(name = "townName", column = @Column(name = "town_name"))
+    @AttributeOverride(name = "streetName", column = @Column(name = "street_name"))
+    @AttributeOverride(name = "houseNumber", column = @Column(name = "house_number"))
     private Address address;
 
     @OneToMany(mappedBy = "counterparty", cascade = CascadeType.ALL)

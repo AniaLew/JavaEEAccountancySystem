@@ -1,33 +1,32 @@
 package com.example.javaee_jpa_hibernate.model.invoice_item;
 
-import com.example.javaee_jpa_hibernate.model.Invoice;
-
 import javax.persistence.*;
 import javax.validation.constraints.Min;
 import java.math.BigDecimal;
 
 @Entity
+@Table(name = "invoice_items")
 public class InvoiceItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "ITEM_ID")
+    @Column(name = "item_id")
     private int id;
 
-    @Column(name = "DESCRIPTION")
+    @Column(name = "description", nullable = false, columnDefinition = "varchar(255) default 'Bread'")
     private String description;
 
-    @Min(value = 1, message = "There need to be at least one item" )
-    @Column(name = "NUMBER_OF_ITEMS")
+    @Column(name = "number_of_items", nullable = false, columnDefinition = "integer default 1")
     private int numberOfItems;
 
-    @Column(name = "AMOUNT")
+    @Min(value = 0)
+    @Column(name = "amount", nullable = false)
     private BigDecimal amount = new BigDecimal(0);
 
-    @Column(name = "VAT_AMOUNT")
+    @Column(name = "vat_amount")
     private BigDecimal vatAmount = new BigDecimal(0);
 
-    @JoinColumn(name = "VAT", referencedColumnName = "VAT_CODE")
+    @JoinColumn(name = "vat", referencedColumnName = "VAT_CODE")
     @Enumerated(EnumType.STRING)
     private Vat vat = Vat.VAT_23;
 

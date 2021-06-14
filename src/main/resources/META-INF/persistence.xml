@@ -8,7 +8,6 @@
 
         <class>com.example.javaee_jpa_hibernate.model.invoice_item.InvoiceItem</class>
         <class>com.example.javaee_jpa_hibernate.model.invoice_item.Vat</class>
-        <class>com.example.javaee_jpa_hibernate.model.counterparty.Counterparty</class>
         <class>com.example.javaee_jpa_hibernate.model.counterparty.Address</class>
         <class>com.example.javaee_jpa_hibernate.model.Invoice</class>
 
