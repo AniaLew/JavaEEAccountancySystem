@@ -13,7 +13,7 @@
 
         <properties>
             <property name="hibernate.connection.driver_class" value="com.mysql.cj.jdbc.Driver" />
-            <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/mysqldb" />
+            <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/mysql_invoices" />
             <property name="hibernate.connection.user" value="root" />
             <property name="hibernate.connection.password" value="AniaLew72" />
             <property name="hibernate.show_sql" value="true" />

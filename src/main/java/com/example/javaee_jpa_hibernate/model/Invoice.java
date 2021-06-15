@@ -30,13 +30,9 @@ public class Invoice implements Serializable, Comparable<Invoice> {
     @JoinColumn(name = "company_id")
     private Counterparty counterparty;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE,
-            CascadeType.REFRESH}, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL)
     @Column(name = "invoice_items", nullable = false)
-    @JoinTable
-//            (name = "invoice_Items",
-//            joinColumns = {@JoinColumn(name = "invoice_id")},
-//            inverseJoinColumns = {@JoinColumn(name = "item_id") })
+    @JoinColumn(name = "invoice_id")
     private List<InvoiceItem> invoiceItems;
 
     public Invoice() {
