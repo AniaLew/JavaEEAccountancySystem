@@ -1,71 +1,170 @@
 package com.example.javaee_jpa_hibernate.repository;
 
 import com.example.javaee_jpa_hibernate.model.Invoice;
-import com.example.javaee_jpa_hibernate.model.counterparty.Address;
+import com.example.javaee_jpa_hibernate.model.InvoiceBody;
 import com.example.javaee_jpa_hibernate.model.counterparty.Counterparty;
 import com.example.javaee_jpa_hibernate.model.invoice_item.InvoiceItem;
-import com.example.javaee_jpa_hibernate.model.invoice_item.Vat;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
-
-import java.math.BigDecimal;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@RunWith(Arquillian.class)
-public class InvoiceRepositoryTest {
-    @Inject
-    private InvoiceRepository invoiceRepository;
-
-    @Deployment
-    public static JavaArchive createDeployment() {
-        return ShrinkWrap.create(JavaArchive.class)
-                .addClass(InvoiceRepository.class)
-                .addClass(Invoice.class)
-                .addClass(Counterparty.class)
-                .addClass(InvoiceItem.class)
-                .addClass(Address.class)
-                .addClass(Vat.class)
-                .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
-                .addAsManifestResource("META-INF/test-persistence.xml", "persistence.xml");
-    }
-
-    @Test
-    public void shouldCountInvoicesWhenNoneCreated() throws Exception {
-        Long nbOfInvoices = invoiceRepository.countAll();
-        assertEquals(Long.valueOf(0), nbOfInvoices);
-        assertEquals(0, invoiceRepository.findAll().size());
-    }
+class InvoiceRepositoryTest {
 
     @Test
     public void shouldCreateAnInvoice() throws Exception {
         //given
-        LocalDate date = LocalDate.now();
-        List<InvoiceItem> invoiceItems = Arrays.asList(
-                new InvoiceItem("Bread",2, BigDecimal.valueOf(100),BigDecimal.valueOf(23), Vat.VAT_23),
-                new InvoiceItem("Milk", 1,BigDecimal.valueOf(50), BigDecimal.valueOf(11.5), Vat.VAT_23));
-
-        Address address1 = new Address("44-234", "Lodz", "StreetA", "673");
-
-        Counterparty counterparty =  new Counterparty("Company no 1", address1, "696875432",
-                "0123456089", "Bank1", "bank-1234561");
-        Invoice invoice = new Invoice(date, counterparty, invoiceItems);
+        EntityManagerFactory entityManagerFactory = Persistence
+                .createEntityManagerFactory("Invoices");
+        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
+        Invoice invoice = InvoiceGenerator.getAnInvoice(LocalDate.now(), "Dummy Company", "Dummy City", Arrays.asList("Item one", "Item two"));
+        repository.getEntityManager().getTransaction().begin();
         //when
-        Invoice expectedInvoice = invoiceRepository.create(invoice);
+        Invoice expectedInvoice = repository.create(invoice);
+        repository.getEntityManager().getTransaction().commit();
         //then
-        assertNotNull(expectedInvoice.getId());
-        assertEquals(date, expectedInvoice.getDate());
-        assertEquals(counterparty, expectedInvoice.getCounterparty());
-        assertEquals(invoiceItems, expectedInvoice.getInvoiceItems());
+        assertNotNull(repository);
+        assertEquals(invoice.getId(), expectedInvoice.getId());
+        Assertions.assertSame(invoice, expectedInvoice);
+        repository.getEntityManager().close();
+        entityManagerFactory.close();
     }
+
+    @Test
+    public void shouldFindAnInvoiceById() throws Exception {
+        //given
+        EntityManagerFactory entityManagerFactory = Persistence
+                .createEntityManagerFactory("Invoices");
+        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
+        Invoice invoice = InvoiceGenerator.getAnInvoice(LocalDate.now(), "Dummy Company", "Dummy City", Arrays.asList("Item one", "Item two"));
+        repository.getEntityManager().getTransaction().begin();
+        repository.create(invoice);
+        repository.getEntityManager().getTransaction().commit();
+        //when
+        Invoice expectedInvoice = repository.findById(invoice.getId());
+        //then
+        assertEquals(invoice.getId(), expectedInvoice.getId());
+        Assertions.assertSame(invoice, expectedInvoice);
+        repository.getEntityManager().close();
+        entityManagerFactory.close();
+    }
+
+    @Test
+    public void shouldFindAllInvoices() throws Exception {
+        //given
+        EntityManagerFactory entityManagerFactory = Persistence
+                .createEntityManagerFactory("Invoices");
+        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
+        List<Invoice> invoices = InvoiceGenerator.getManyInvoices(5);
+        repository.getEntityManager().getTransaction().begin();
+        for (Invoice invoice : invoices) {
+            repository.create(invoice);
+        }
+        repository.getEntityManager().flush();
+        repository.getEntityManager().getTransaction().commit();
+        //when
+        List<Invoice> expectedInvoices = repository.findAll();
+        //then
+        assertEquals(invoices.size(), expectedInvoices.size());
+        List<Invoice> sortedInvoices = invoices.stream().sorted().collect(Collectors.toList());
+        List<Invoice> sortedExpectedInvoices = expectedInvoices.stream().sorted().collect(Collectors.toList());
+        assertArrayEquals(sortedInvoices.toArray(), sortedExpectedInvoices.toArray());
+        repository.getEntityManager().close();
+        entityManagerFactory.close();
+    }
+
+    @Test
+    public void shouldDeleteAnInvoiceById() throws Exception {
+        //given
+        EntityManagerFactory entityManagerFactory = Persistence
+                .createEntityManagerFactory("Invoices");
+        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
+        List<Invoice> invoices = InvoiceGenerator.getManyInvoices(5);
+        try {
+            repository.getEntityManager().getTransaction().begin();
+            for (Invoice invoice : invoices) {
+                repository.create(invoice);
+            }
+            repository.getEntityManager().getTransaction().commit();
+        } finally {
+            if(repository.getEntityManager().getTransaction().isActive()) {
+                repository.getEntityManager().getTransaction().rollback();
+            }
+        }
+        try {
+            repository.getEntityManager().getTransaction().begin();
+            //when
+            repository.delete(invoices.get(0).getId());
+            //then
+            repository.getEntityManager().getTransaction().commit();
+        } finally {
+            if(repository.getEntityManager().getTransaction().isActive()) {
+                repository.getEntityManager().getTransaction().rollback();
+            }
+        }
+        List<Invoice> expectedInvoices = repository.findAll();
+        assertEquals(invoices.size() - expectedInvoices.size(), 1);
+        assertFalse(expectedInvoices.contains(invoices.get(0)));
+        repository.getEntityManager().close();
+        entityManagerFactory.close();
+    }
+
+    @Test
+    public void shouldUpdateAnInvoice() throws Exception {
+        //given
+        EntityManagerFactory entityManagerFactory = Persistence
+                .createEntityManagerFactory("Invoices");
+        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
+        Invoice invoice = InvoiceGenerator.getAnInvoice(LocalDate.now(), "Dummy Company", "Dummy City",
+                Arrays.asList("Item one", "Item two"));
+        repository.getEntityManager().getTransaction().begin();
+        repository.create(invoice);
+        Counterparty expectedCounterparty = InvoiceGenerator.getACounterparty();
+        List<InvoiceItem> expectedInvoiceItems = InvoiceGenerator.getAnInvoiceItem();
+        InvoiceBody invoiceBody = new InvoiceBody(invoice.getDate().plusDays(10),
+                expectedCounterparty, expectedInvoiceItems);
+        //when
+        Invoice actualInvoice = repository.update(invoice.getId(), invoiceBody);
+        //then
+        Invoice actualInvoiceDb = repository.findById(actualInvoice.getId());
+        repository.getEntityManager().getTransaction().commit();
+        assertEquals(invoiceBody.getDate(), actualInvoice.getDate());
+        assertEquals(invoiceBody.getCounterparty(), actualInvoice.getCounterparty());
+        assertEquals(invoiceBody.getInvoiceItems(), actualInvoice.getInvoiceItems());
+        System.out.println(invoiceBody.getDate());
+        System.out.println(actualInvoiceDb.getDate());
+        assertEquals(invoiceBody.getDate(), actualInvoiceDb.getDate());
+        assertEquals(invoiceBody.getCounterparty(), actualInvoiceDb.getCounterparty());
+        assertEquals(invoiceBody.getInvoiceItems(), actualInvoiceDb.getInvoiceItems());
+        repository.getEntityManager().close();
+        entityManagerFactory.close();
+    }
+
+    @Test
+    public void shouldCountAllInvoices() throws Exception {
+        //given
+        EntityManagerFactory entityManagerFactory = Persistence
+                .createEntityManagerFactory("Invoices");
+        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
+        List<Invoice> invoices = InvoiceGenerator.getManyInvoices(5);
+        repository.getEntityManager().getTransaction().begin();
+        for (Invoice invoice : invoices) {
+            repository.create(invoice);
+        }
+        repository.getEntityManager().getTransaction().commit();
+        //when
+        Long expectedNumber = repository.countAll();
+        //then
+        assertEquals(invoices.size(), expectedNumber);
+        repository.getEntityManager().close();
+        entityManagerFactory.close();
+    }
+
 }

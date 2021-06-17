@@ -9,12 +9,13 @@ import javax.validation.constraints.FutureOrPresent;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
 @Entity
 @Table(name = "invoices")
-public class Invoice implements Serializable, Comparable<Invoice> {
+public class Invoice implements Serializable, Comparable<Invoice>, Comparator<Invoice> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -108,6 +109,11 @@ public class Invoice implements Serializable, Comparable<Invoice> {
     }
 
     @Override
+    public int compare(Invoice invoice1, Invoice invoice2) {
+        return  invoice1.getCounterparty().getCompanyName().compareTo(invoice2.getCounterparty().getCompanyName());
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Invoice)) return false;
@@ -120,9 +126,6 @@ public class Invoice implements Serializable, Comparable<Invoice> {
     @Override
     public int hashCode() {
         return Objects.hash(getDate(), getCounterparty(), getInvoiceItems());
-    }
-
-    public void setId(Long id) {
     }
 }
 

@@ -1,8 +1,11 @@
 package com.example.javaee_jpa_hibernate.repository;
 
 import com.example.javaee_jpa_hibernate.model.Invoice;
+import com.example.javaee_jpa_hibernate.model.InvoiceBody;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.util.List;
@@ -14,9 +17,14 @@ import static javax.transaction.Transactional.TxType.SUPPORTS;
 @Transactional(SUPPORTS)
 public class InvoiceRepository implements CrudOperations {
     @PersistenceContext(unitName = "Invoices")
-    EntityManager entityManager;
+    private final EntityManager entityManager;
 
-    public InvoiceRepository() {
+    public InvoiceRepository(EntityManagerFactory entityManagerFactory) {
+        entityManager = Persistence.createEntityManagerFactory("Invoices").createEntityManager();
+    }
+
+    public EntityManager getEntityManager() {
+        return entityManager;
     }
 
     @Override
@@ -46,8 +54,11 @@ public class InvoiceRepository implements CrudOperations {
     }
 
     @Transactional(REQUIRED)
-    public Invoice update(Invoice invoice) {
-        entityManager.merge(invoice);
+    public Invoice update(Long id, InvoiceBody invoiceBody) {
+        delete(id);
+        Invoice invoice = new Invoice(invoiceBody.getDate(),
+                invoiceBody.getCounterparty(), invoiceBody.getInvoiceItems());
+        entityManager.persist(invoice);
         return invoice;
     }
 
