@@ -5,8 +5,8 @@ import com.example.javaee_jpa_hibernate.model.Invoice;
 import java.util.List;
 
 public interface CrudOperations {
-    public Invoice create(Invoice invoice);
-    public Invoice findById(Long id);
-    public List<Invoice> findAll();
-    public void delete(Long id);
+    Invoice create(Invoice invoice);
+    Invoice findById(Long id);
+    List<Invoice> findAll();
+    void delete(Long id);
 }

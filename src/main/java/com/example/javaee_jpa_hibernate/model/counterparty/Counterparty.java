@@ -43,8 +43,7 @@ public class Counterparty implements Serializable {
     private List<Invoice> invoices;
 
     public Counterparty(String companyName, Address address, String phoneNumber, String nip,
-                        String bankName,
-                        String bankNumber) {
+                        String bankName, String bankNumber) {
         this.companyName = companyName;
         this.address = address;
         this.phoneNumber = phoneNumber;

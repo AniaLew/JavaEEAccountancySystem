@@ -4,10 +4,11 @@ import com.example.javaee_jpa_hibernate.model.Invoice;
 import com.example.javaee_jpa_hibernate.model.InvoiceBody;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,8 +20,8 @@ public class InvoiceRepository implements CrudOperations {
     @PersistenceContext(unitName = "Invoices")
     private final EntityManager entityManager;
 
-    public InvoiceRepository(EntityManagerFactory entityManagerFactory) {
-        entityManager = Persistence.createEntityManagerFactory("Invoices").createEntityManager();
+    public InvoiceRepository(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
     public EntityManager getEntityManager() {
@@ -29,13 +30,13 @@ public class InvoiceRepository implements CrudOperations {
 
     @Override
     @Transactional(REQUIRED)
-    public Invoice create(Invoice invoice) {
+    public Invoice create(@NotNull Invoice invoice) {
         entityManager.persist(invoice);
         return invoice;
     }
 
     @Override
-    public Invoice findById(Long id) {
+    public Invoice findById(@NotNull @Min(1) @Max(Long.MAX_VALUE) Long id) {
         return entityManager.find(Invoice.class, id);
     }
 
@@ -49,12 +50,12 @@ public class InvoiceRepository implements CrudOperations {
 
     @Override
     @Transactional(REQUIRED)
-    public void delete(Long id) {
+    public void delete(@NotNull @Min(1) @Max(Long.MAX_VALUE) Long id) {
         entityManager.remove(entityManager.getReference(Invoice.class, id));
     }
 
     @Transactional(REQUIRED)
-    public Invoice update(Long id, InvoiceBody invoiceBody) {
+    public Invoice update(@NotNull Long id, @NotNull InvoiceBody invoiceBody) {
         delete(id);
         Invoice invoice = new Invoice(invoiceBody.getDate(),
                 invoiceBody.getCounterparty(), invoiceBody.getInvoiceItems());

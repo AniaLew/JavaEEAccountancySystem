@@ -24,5 +24,4 @@ public enum Vat {
                 .findFirst()
                 .orElseThrow(IllegalArgumentException::new);
     }
-
 }

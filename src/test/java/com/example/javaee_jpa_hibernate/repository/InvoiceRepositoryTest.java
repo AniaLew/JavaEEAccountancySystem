@@ -4,167 +4,178 @@ import com.example.javaee_jpa_hibernate.model.Invoice;
 import com.example.javaee_jpa_hibernate.model.InvoiceBody;
 import com.example.javaee_jpa_hibernate.model.counterparty.Counterparty;
 import com.example.javaee_jpa_hibernate.model.invoice_item.InvoiceItem;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
-import java.time.LocalDate;
-import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class InvoiceRepositoryTest {
+    private static EntityManagerFactory entityManagerFactory;
+    private InvoiceRepository repository;
+
+    @BeforeAll
+    public static void setup() {
+        entityManagerFactory = Persistence.createEntityManagerFactory("Invoices");
+        System.out.println("setup" + entityManagerFactory);
+    }
+
+    @BeforeEach
+    public void setRepository() {
+        repository = new InvoiceRepository(entityManagerFactory.createEntityManager());
+        repository.getEntityManager().getTransaction().begin();
+    }
+
+    @Test
+    public void shouldCreateRepository() {
+        assertNotNull(repository);
+    }
 
     @Test
     public void shouldCreateAnInvoice() throws Exception {
         //given
-        EntityManagerFactory entityManagerFactory = Persistence
-                .createEntityManagerFactory("Invoices");
-        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
-        Invoice invoice = InvoiceGenerator.getAnInvoice(LocalDate.now(), "Dummy Company", "Dummy City", Arrays.asList("Item one", "Item two"));
-        repository.getEntityManager().getTransaction().begin();
+        Invoice invoice = InvoiceProvider.getInvoice();
         //when
         Invoice expectedInvoice = repository.create(invoice);
-        repository.getEntityManager().getTransaction().commit();
         //then
-        assertNotNull(repository);
-        assertEquals(invoice.getId(), expectedInvoice.getId());
-        Assertions.assertSame(invoice, expectedInvoice);
-        repository.getEntityManager().close();
-        entityManagerFactory.close();
+        assertEquals(invoice, expectedInvoice);
+        assertTrue(repository.getEntityManager().contains(invoice));
+        Invoice invoiceFromDatabase = repository.getEntityManager().getReference(Invoice.class, invoice.getId());
+        assertThat(invoiceFromDatabase.getDate())
+                .isNotNull()
+                .isEqualTo(invoice.getDate());
+        assertAll(
+                () -> assertEquals(invoice.getCounterparty().getCompanyName(),
+                        invoiceFromDatabase.getCounterparty().getCompanyName()),
+                () -> assertEquals(invoice.getCounterparty().getAddress(),
+                        invoiceFromDatabase.getCounterparty().getAddress()),
+                () -> assertEquals(invoice.getCounterparty().getPhoneNumber(),
+                        invoiceFromDatabase.getCounterparty().getPhoneNumber()),
+                () -> assertEquals(invoice.getCounterparty().getNip(),
+                        invoiceFromDatabase.getCounterparty().getNip()),
+                () -> assertEquals(invoice.getCounterparty().getBankName(),
+                        invoiceFromDatabase.getCounterparty().getBankName()),
+                () -> assertEquals(invoice.getCounterparty().getBankNumber(),
+                        invoiceFromDatabase.getCounterparty().getBankNumber())
+        );
+        assertSame(invoice.getInvoiceItems(), invoiceFromDatabase.getInvoiceItems());
     }
 
     @Test
     public void shouldFindAnInvoiceById() throws Exception {
         //given
-        EntityManagerFactory entityManagerFactory = Persistence
-                .createEntityManagerFactory("Invoices");
-        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
-        Invoice invoice = InvoiceGenerator.getAnInvoice(LocalDate.now(), "Dummy Company", "Dummy City", Arrays.asList("Item one", "Item two"));
-        repository.getEntityManager().getTransaction().begin();
+        Invoice invoice = InvoiceProvider.getInvoice();
         repository.create(invoice);
-        repository.getEntityManager().getTransaction().commit();
         //when
-        Invoice expectedInvoice = repository.findById(invoice.getId());
+        Invoice actualInvoice = repository.findById(invoice.getId());
         //then
-        assertEquals(invoice.getId(), expectedInvoice.getId());
-        Assertions.assertSame(invoice, expectedInvoice);
-        repository.getEntityManager().close();
-        entityManagerFactory.close();
+        assertSame(invoice, actualInvoice);
+        Invoice invoiceFromDatabase = repository.getEntityManager().getReference(Invoice.class, actualInvoice.getId());
+        assertSame(invoice.getInvoiceItems(), invoiceFromDatabase.getInvoiceItems());
     }
 
     @Test
     public void shouldFindAllInvoices() throws Exception {
         //given
-        EntityManagerFactory entityManagerFactory = Persistence
-                .createEntityManagerFactory("Invoices");
-        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
-        List<Invoice> invoices = InvoiceGenerator.getManyInvoices(5);
-        repository.getEntityManager().getTransaction().begin();
+        List<Invoice> invoices = InvoiceProvider.getInvoices(5);
         for (Invoice invoice : invoices) {
             repository.create(invoice);
         }
-        repository.getEntityManager().flush();
-        repository.getEntityManager().getTransaction().commit();
         //when
-        List<Invoice> expectedInvoices = repository.findAll();
+        List<Invoice> actualInvoices = repository.findAll();
         //then
-        assertEquals(invoices.size(), expectedInvoices.size());
-        List<Invoice> sortedInvoices = invoices.stream().sorted().collect(Collectors.toList());
-        List<Invoice> sortedExpectedInvoices = expectedInvoices.stream().sorted().collect(Collectors.toList());
-        assertArrayEquals(sortedInvoices.toArray(), sortedExpectedInvoices.toArray());
-        repository.getEntityManager().close();
-        entityManagerFactory.close();
+        assertEquals(invoices.size(), actualInvoices.size());
+        assertArrayEquals(invoices.toArray(), actualInvoices.toArray());
+        List<Invoice> invoicesFromDb = repository
+                .getEntityManager()
+                .createQuery("SELECT i FROM Invoice i ORDER BY i.date", Invoice.class)
+                .getResultList();
+        assertArrayEquals(invoices.toArray(), invoicesFromDb.toArray());
     }
 
     @Test
     public void shouldDeleteAnInvoiceById() throws Exception {
         //given
-        EntityManagerFactory entityManagerFactory = Persistence
-                .createEntityManagerFactory("Invoices");
-        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
-        List<Invoice> invoices = InvoiceGenerator.getManyInvoices(5);
-        try {
-            repository.getEntityManager().getTransaction().begin();
-            for (Invoice invoice : invoices) {
-                repository.create(invoice);
-            }
-            repository.getEntityManager().getTransaction().commit();
-        } finally {
-            if(repository.getEntityManager().getTransaction().isActive()) {
-                repository.getEntityManager().getTransaction().rollback();
-            }
+        List<Invoice> invoices = InvoiceProvider.getInvoices(5);
+        for (Invoice invoice : invoices) {
+            repository.create(invoice);
         }
-        try {
-            repository.getEntityManager().getTransaction().begin();
-            //when
-            repository.delete(invoices.get(0).getId());
-            //then
-            repository.getEntityManager().getTransaction().commit();
-        } finally {
-            if(repository.getEntityManager().getTransaction().isActive()) {
-                repository.getEntityManager().getTransaction().rollback();
-            }
-        }
-        List<Invoice> expectedInvoices = repository.findAll();
+        //when
+        repository.delete(invoices.get(0).getId());
+        //then
+        List<Invoice> expectedInvoices = repository
+                .getEntityManager()
+                .createQuery("SELECT i FROM Invoice i ORDER BY i.date", Invoice.class)
+                .getResultStream()
+                .collect(Collectors.toList());;
         assertEquals(invoices.size() - expectedInvoices.size(), 1);
         assertFalse(expectedInvoices.contains(invoices.get(0)));
-        repository.getEntityManager().close();
-        entityManagerFactory.close();
     }
 
     @Test
     public void shouldUpdateAnInvoice() throws Exception {
         //given
-        EntityManagerFactory entityManagerFactory = Persistence
-                .createEntityManagerFactory("Invoices");
-        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
-        Invoice invoice = InvoiceGenerator.getAnInvoice(LocalDate.now(), "Dummy Company", "Dummy City",
-                Arrays.asList("Item one", "Item two"));
-        repository.getEntityManager().getTransaction().begin();
+        Invoice invoice = InvoiceProvider.getInvoice();
         repository.create(invoice);
-        Counterparty expectedCounterparty = InvoiceGenerator.getACounterparty();
-        List<InvoiceItem> expectedInvoiceItems = InvoiceGenerator.getAnInvoiceItem();
+        Counterparty expectedCounterparty = InvoiceProvider.getCounterparty();
+        List<InvoiceItem> expectedInvoiceItems = InvoiceProvider.getInvoiceItems(2);
         InvoiceBody invoiceBody = new InvoiceBody(invoice.getDate().plusDays(10),
                 expectedCounterparty, expectedInvoiceItems);
         //when
         Invoice actualInvoice = repository.update(invoice.getId(), invoiceBody);
         //then
         Invoice actualInvoiceDb = repository.findById(actualInvoice.getId());
-        repository.getEntityManager().getTransaction().commit();
         assertEquals(invoiceBody.getDate(), actualInvoice.getDate());
         assertEquals(invoiceBody.getCounterparty(), actualInvoice.getCounterparty());
         assertEquals(invoiceBody.getInvoiceItems(), actualInvoice.getInvoiceItems());
-        System.out.println(invoiceBody.getDate());
-        System.out.println(actualInvoiceDb.getDate());
         assertEquals(invoiceBody.getDate(), actualInvoiceDb.getDate());
         assertEquals(invoiceBody.getCounterparty(), actualInvoiceDb.getCounterparty());
         assertEquals(invoiceBody.getInvoiceItems(), actualInvoiceDb.getInvoiceItems());
-        repository.getEntityManager().close();
-        entityManagerFactory.close();
     }
 
     @Test
     public void shouldCountAllInvoices() throws Exception {
         //given
-        EntityManagerFactory entityManagerFactory = Persistence
-                .createEntityManagerFactory("Invoices");
-        InvoiceRepository repository = new InvoiceRepository(entityManagerFactory);
-        List<Invoice> invoices = InvoiceGenerator.getManyInvoices(5);
-        repository.getEntityManager().getTransaction().begin();
+        List<Invoice> invoices = InvoiceProvider.getInvoices(5);
         for (Invoice invoice : invoices) {
             repository.create(invoice);
         }
-        repository.getEntityManager().getTransaction().commit();
         //when
         Long expectedNumber = repository.countAll();
         //then
         assertEquals(invoices.size(), expectedNumber);
+    }
+
+    @AfterEach
+    public void closeEntityManager() {
+        repository.getEntityManager().getTransaction().commit();
+        clearDatabase();
         repository.getEntityManager().close();
+    }
+
+    @AfterAll
+    public static void closeEntityManagerFactory() {
         entityManagerFactory.close();
     }
 
+    private void clearDatabase() {
+        List<Invoice> invoices = repository.findAll();
+        try {
+            repository.getEntityManager().getTransaction().begin();
+            Iterator<Invoice> invoiceIterator = invoices.iterator();
+            while (invoiceIterator.hasNext()) {
+                repository.delete(invoiceIterator.next().getId());
+            }
+            repository.getEntityManager().getTransaction().commit();
+        } finally {
+            if (repository.getEntityManager().getTransaction().isActive()) {
+                repository.getEntityManager().getTransaction().rollback();
+            }
+        }
+    }
 }

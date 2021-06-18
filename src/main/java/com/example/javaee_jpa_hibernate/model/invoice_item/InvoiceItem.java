@@ -2,11 +2,12 @@ package com.example.javaee_jpa_hibernate.model.invoice_item;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "invoice_items")
-public class InvoiceItem {
+public class InvoiceItem implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

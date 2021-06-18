@@ -1,13 +1,18 @@
 package com.example.javaee_jpa_hibernate.model.counterparty;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Embeddable
 public class Address implements Serializable {
+    @NotNull
     private String zipCode;
+    @NotNull
     private String townName;
+    @NotNull
     private String streetName;
+    @NotNull
     private String houseNumber;
 
     public Address(String zipCode, String townName, String streetName, String houseNumber) {

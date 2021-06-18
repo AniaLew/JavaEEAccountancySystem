@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd"
+             version="2.2">
+    <persistence-unit name="Invoices">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <class>com.example.javaee_jpa_hibernate.model.invoice_item.InvoiceItem</class>
+        <class>com.example.javaee_jpa_hibernate.model.invoice_item.Vat</class>
+        <class>com.example.javaee_jpa_hibernate.model.counterparty.Address</class>
+        <class>com.example.javaee_jpa_hibernate.model.Invoice</class>
+
+        <properties>
+            <property name="hibernate.connection.driver_class" value="com.mysql.cj.jdbc.Driver" />
+            <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/mysql_invoices" />
+            <property name="hibernate.connection.user" value="root" />
+            <property name="hibernate.connection.password" value="AniaLew72" />
+            <property name="hibernate.show_sql" value="true" />
+            <property name="hibernate.hbm2ddl.auto" value="create"/>
+        </properties>
+    </persistence-unit>
+
+</persistence>

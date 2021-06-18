@@ -6,6 +6,7 @@ import com.example.javaee_jpa_hibernate.model.invoice_item.InvoiceItem;
 import javax.json.bind.annotation.JsonbDateFormat;
 import javax.persistence.*;
 import javax.validation.constraints.FutureOrPresent;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -15,12 +16,13 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "invoices")
-public class Invoice implements Serializable, Comparable<Invoice>, Comparator<Invoice> {
+public class Invoice implements Serializable, Comparable<Invoice>, Comparator<Invoice>{
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "invoice_id")
-    private Long id;
+    @Min(value = 1L)
+    private Long id = 1L;
 
     @FutureOrPresent(message = "Data must be in present or future")
     @JsonbDateFormat(value = "yyyy-MM-dd")
