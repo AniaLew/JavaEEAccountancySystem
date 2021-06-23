@@ -1,42 +1,39 @@
-package com.example.javaee_jpa_hibernate.repository;
+package com.invoicebook.repository;
 
-import com.example.javaee_jpa_hibernate.model.Invoice;
-import com.example.javaee_jpa_hibernate.model.InvoiceBody;
+import com.invoicebook.model.Invoice;
+import com.invoicebook.model.InvoiceBody;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import static com.invoicebook.appsettings.AppConfig.PERSISTENCE_UNIT;
 import static javax.transaction.Transactional.TxType.REQUIRED;
 import static javax.transaction.Transactional.TxType.SUPPORTS;
 
 @Transactional(SUPPORTS)
+@ApplicationScoped
 public class InvoiceRepository implements CrudOperations {
-    @PersistenceContext(unitName = "Invoices")
-    private final EntityManager entityManager;
+    @PersistenceContext(unitName = PERSISTENCE_UNIT)
+    private EntityManager entityManager;
 
     public InvoiceRepository(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
 
-    public EntityManager getEntityManager() {
-        return entityManager;
+    public InvoiceRepository() {
     }
 
     @Override
     @Transactional(REQUIRED)
-    public Invoice create(@NotNull Invoice invoice) {
+    public void create(Invoice invoice) {
         entityManager.persist(invoice);
-        return invoice;
     }
 
     @Override
-    public Invoice findById(@NotNull @Min(1) @Max(Long.MAX_VALUE) Long id) {
+    public Invoice findById(Long id) {
         return entityManager.find(Invoice.class, id);
     }
 
@@ -44,18 +41,17 @@ public class InvoiceRepository implements CrudOperations {
     public List<Invoice> findAll() {
         return entityManager
                 .createQuery("SELECT i FROM Invoice i ORDER BY i.date", Invoice.class)
-                .getResultStream()
-                .collect(Collectors.toList());
+                .getResultList();
     }
 
     @Override
     @Transactional(REQUIRED)
-    public void delete(@NotNull @Min(1) @Max(Long.MAX_VALUE) Long id) {
+    public void delete(Long id) {
         entityManager.remove(entityManager.getReference(Invoice.class, id));
     }
 
     @Transactional(REQUIRED)
-    public Invoice update(@NotNull Long id, @NotNull InvoiceBody invoiceBody) {
+    public Invoice update(Long id, InvoiceBody invoiceBody) {
         delete(id);
         Invoice invoice = new Invoice(invoiceBody.getDate(),
                 invoiceBody.getCounterparty(), invoiceBody.getInvoiceItems());

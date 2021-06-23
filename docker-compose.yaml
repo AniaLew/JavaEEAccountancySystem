@@ -10,7 +10,7 @@ services:
     - 3306:3306
     environment:
       MYSQL_ROOT_PASSWORD: AniaLew72
-      MYSQL_DATABASE: mysqldb
+      MYSQL_DATABASE: invoicebook
 
   adminer:
     image: adminer

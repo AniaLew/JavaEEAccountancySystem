@@ -1,13 +1,10 @@
-package com.example.javaee_jpa_hibernate.model;
+package com.invoicebook.model;
 
-import com.example.javaee_jpa_hibernate.model.counterparty.Counterparty;
-import com.example.javaee_jpa_hibernate.model.invoice_item.InvoiceItem;
+import com.invoicebook.model.counterparty.Counterparty;
+import com.invoicebook.model.invoice_item.InvoiceItem;
 
 import javax.json.bind.annotation.JsonbDateFormat;
 import javax.persistence.*;
-import javax.validation.constraints.FutureOrPresent;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -21,20 +18,17 @@ public class Invoice implements Serializable, Comparable<Invoice>, Comparator<In
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "invoice_id")
-    @Min(value = 1L)
-    private Long id = 1L;
+    private Long id;
 
-    @FutureOrPresent(message = "Data must be in present or future")
     @JsonbDateFormat(value = "yyyy-MM-dd")
-    @NotNull(message = "Date cannot be NULL")
-    private LocalDate date = LocalDate.now();
+    private LocalDate date;
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "company_id")
     private Counterparty counterparty;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @Column(name = "invoice_items", nullable = false)
+    @Column(name = "invoice_items")
     @JoinColumn(name = "invoice_id")
     private List<InvoiceItem> invoiceItems;
 
@@ -50,6 +44,10 @@ public class Invoice implements Serializable, Comparable<Invoice>, Comparator<In
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public LocalDate getDate() {

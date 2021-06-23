@@ -1,11 +1,11 @@
-package com.example.javaee_jpa_hibernate.repository;
+package com.invoicebook.repository;
 
-import com.example.javaee_jpa_hibernate.model.Invoice;
+import com.invoicebook.model.Invoice;
 
 import java.util.List;
 
 public interface CrudOperations {
-    Invoice create(Invoice invoice);
+    void create(Invoice invoice);
     Invoice findById(Long id);
     List<Invoice> findAll();
     void delete(Long id);

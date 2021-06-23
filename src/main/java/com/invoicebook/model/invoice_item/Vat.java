@@ -1,8 +1,9 @@
-package com.example.javaee_jpa_hibernate.model.invoice_item;
+package com.invoicebook.model.invoice_item;
 
+import java.io.Serializable;
 import java.util.stream.Stream;
 
-public enum Vat {
+public enum Vat implements Serializable {
     VAT_23(23),
     VAT_8(8),
     VAT_5(5),

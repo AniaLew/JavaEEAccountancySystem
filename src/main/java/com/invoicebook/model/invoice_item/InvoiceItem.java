@@ -1,7 +1,6 @@
-package com.example.javaee_jpa_hibernate.model.invoice_item;
+package com.invoicebook.model.invoice_item;
 
 import javax.persistence.*;
-import javax.validation.constraints.Min;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -14,20 +13,19 @@ public class InvoiceItem implements Serializable {
     @Column(name = "item_id")
     private int id;
 
-    @Column(name = "description", nullable = false, columnDefinition = "varchar(255) default 'Bread'")
+    @Column(name = "description")
     private String description;
 
-    @Column(name = "number_of_items", nullable = false, columnDefinition = "integer default 1")
+    @Column(name = "number_of_items")
     private int numberOfItems;
 
-    @Min(value = 0)
-    @Column(name = "amount", nullable = false)
-    private BigDecimal amount = new BigDecimal(0);
+    @Column(name = "amount")
+    private BigDecimal amount;
 
     @Column(name = "vat_amount")
-    private BigDecimal vatAmount = new BigDecimal(0);
+    private BigDecimal vatAmount;
 
-    @JoinColumn(name = "vat", referencedColumnName = "VAT_CODE")
+    @JoinColumn(name = "vat")
     @Enumerated(EnumType.STRING)
     private Vat vat = Vat.VAT_23;
 
@@ -38,6 +36,10 @@ public class InvoiceItem implements Serializable {
         this.amount = amount;
         this.vatAmount = vatAmount;
         this.vat = vat;
+    }
+
+    public InvoiceItem(String description, int numberOfItems, BigDecimal amount, BigDecimal vatAmount) {
+        new InvoiceItem(description, numberOfItems, amount, vatAmount, Vat.VAT_23);
     }
 
     public InvoiceItem() {

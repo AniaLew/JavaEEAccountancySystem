@@ -1,10 +1,9 @@
-package com.example.javaee_jpa_hibernate.model.counterparty;
+package com.invoicebook.model.counterparty;
 
-import com.example.javaee_jpa_hibernate.model.Invoice;
+import com.invoicebook.model.Invoice;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -15,24 +14,23 @@ public class Counterparty implements Serializable {
     @Column(name = "company_id")
     private int id;
 
-    @Column(name = "nip", nullable = false, columnDefinition = "varchar(10) default '0000000000'")
+    @Column(name = "nip")
     private String nip;
 
-    @Column(name = "company_name", nullable = false, columnDefinition = "varchar(50) default 'Company'")
+    @Column(name = "company_name")
     private String companyName;
 
-    @Column(name = "phone_number",  nullable = true, columnDefinition = "varchar(20) default '0000000000'")
+    @Column(name = "phone_number")
     private String phoneNumber;
 
-    @Column(name = "bank_name",  nullable = false, columnDefinition = "varchar(50) default 'Bank'")
+    @Column(name = "bank_name")
     private String bankName;
 
-    @Column(name = "bank_number",  nullable = false, columnDefinition = "varchar(26) default '11111111111111111111111111'")
+    @Column(name = "bank_number")
     @NotEmpty(message = "NIP cannot be empty")
     private String bankNumber;
 
     @Embedded
-    @NotNull(message = "Address cannot be null")
     @AttributeOverride(name="zipCode", column = @Column(name="zip_code"))
     @AttributeOverride(name = "townName", column = @Column(name = "town_name"))
     @AttributeOverride(name = "streetName", column = @Column(name = "street_name"))
@@ -54,6 +52,8 @@ public class Counterparty implements Serializable {
 
     public Counterparty() {
     }
+
+
 
     public int getId() {
         return id;
