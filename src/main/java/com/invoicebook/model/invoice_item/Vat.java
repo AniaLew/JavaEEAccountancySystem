@@ -1,28 +1,29 @@
 package com.invoicebook.model.invoice_item;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.io.Serializable;
-import java.util.stream.Stream;
 
 public enum Vat implements Serializable {
-    VAT_23(23),
-    VAT_8(8),
-    VAT_5(5),
-    VAT_0(0);
+    VAT_23(23, "vat_23"),
+    VAT_8(8, "vat_8"),
+    VAT_5(5, "vat_5"),
+    VAT_0(0, "vat_0");
 
     private final int vatValue;
+    private final String name;
 
-    Vat(int vatCode) {
+    Vat(int vatCode, String name) {
         this.vatValue = vatCode;
+        this.name = name;
     }
 
     public int getVatValue() {
         return vatValue;
     }
 
-    public static Vat ofVatValue(int  vatValue) {
-        return Stream.of(Vat.values())
-                .filter(v -> v.getVatValue() ==  vatValue)
-                .findFirst()
-                .orElseThrow(IllegalArgumentException::new);
+    @JsonValue
+    public String getName() {
+        return name;
     }
 }

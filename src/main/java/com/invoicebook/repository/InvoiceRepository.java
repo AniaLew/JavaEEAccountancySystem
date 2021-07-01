@@ -2,12 +2,18 @@ package com.invoicebook.repository;
 
 import com.invoicebook.model.Invoice;
 import com.invoicebook.model.InvoiceBody;
+import com.invoicebook.model.counterparty.Counterparty;
+import com.invoicebook.model.invoice_item.InvoiceItem;
+import com.invoicebook.model.invoice_item.InvoiceItemBody;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.invoicebook.appsettings.AppConfig.PERSISTENCE_UNIT;
 import static javax.transaction.Transactional.TxType.REQUIRED;
@@ -51,19 +57,36 @@ public class InvoiceRepository implements CrudOperations {
     }
 
     @Transactional(REQUIRED)
-    public Invoice update(Long id, InvoiceBody invoiceBody) {
-        delete(id);
-        Invoice invoice = new Invoice(invoiceBody.getDate(),
-                invoiceBody.getCounterparty(), invoiceBody.getInvoiceItems());
-        entityManager.persist(invoice);
+    public Invoice update(Long id, InvoiceBody invoiceBody) throws ParseException {
+       Invoice invoice = entityManager.getReference(Invoice.class, id);
+       if(Optional.ofNullable(invoiceBody.getDate()).isPresent()) {
+           invoice.setDate(invoiceBody.getDate());
+       }
+       if(Optional.ofNullable(invoiceBody.getCounterpartyBody()).isPresent()) {
+           invoice.setCounterparty(new Counterparty(invoiceBody.getCounterpartyBody()));
+       }
+       if ((Optional.ofNullable(invoiceBody.getInvoiceItemBodies()).isPresent())) {
+           List<InvoiceItem> invoiceItems = new ArrayList<>();
+           for(InvoiceItemBody invoiceItemBody: invoiceBody.getInvoiceItemBodies()) {
+               invoiceItems.add(new InvoiceItem(invoiceItemBody));
+           }
+           invoice.setInvoiceItems(invoiceItems);
+       }
         return invoice;
     }
 
     public Long countAll() {
         return entityManager
-                .createQuery("SELECT i FROM Invoice i ORDER BY i.date", Invoice.class)
+                .createQuery("SELECT i FROM Invoice i", Invoice.class)
                 .getResultList()
                 .stream()
                 .count();
+    }
+
+    public boolean exists(Long id) {
+        Invoice invoice = entityManager.find(Invoice.class, id);
+        return Optional
+                .ofNullable(invoice)
+                .isPresent();
     }
 }

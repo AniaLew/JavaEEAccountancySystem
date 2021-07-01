@@ -1,5 +1,6 @@
 package com.invoicebook.model.counterparty;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.invoicebook.model.Invoice;
 
 import javax.persistence.*;
@@ -10,7 +11,7 @@ import java.util.List;
 @Entity
 public class Counterparty implements Serializable {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "company_id")
     private int id;
 
@@ -38,6 +39,7 @@ public class Counterparty implements Serializable {
     private Address address;
 
     @OneToMany(mappedBy = "counterparty", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Invoice> invoices;
 
     public Counterparty(String companyName, Address address, String phoneNumber, String nip,
@@ -50,10 +52,17 @@ public class Counterparty implements Serializable {
         this.bankNumber = bankNumber;
     }
 
-    public Counterparty() {
+    public Counterparty(CounterpartyBody counterpartyBody) {
+        this.companyName = counterpartyBody.getCompanyName();
+        this.address = counterpartyBody.getAddress();
+        this.phoneNumber = counterpartyBody.getPhoneNumber();
+        this.nip = counterpartyBody.getNip();
+        this.bankName = counterpartyBody.getBankName();
+        this.bankNumber = counterpartyBody.getBankNumber();
     }
 
-
+    public Counterparty() {
+    }
 
     public int getId() {
         return id;

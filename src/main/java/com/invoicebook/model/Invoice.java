@@ -1,33 +1,32 @@
 package com.invoicebook.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.invoicebook.model.counterparty.Counterparty;
 import com.invoicebook.model.invoice_item.InvoiceItem;
+import com.invoicebook.model.invoice_item.InvoiceItemBody;
 
-import javax.json.bind.annotation.JsonbDateFormat;
+import javax.json.bind.JsonbBuilder;
 import javax.persistence.*;
 import java.io.Serializable;
-import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Entity
 @Table(name = "invoices")
 public class Invoice implements Serializable, Comparable<Invoice>, Comparator<Invoice>{
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "invoice_id")
     private Long id;
 
-    @JsonbDateFormat(value = "yyyy-MM-dd")
-    private LocalDate date;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private Date date;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "company_id")
     private Counterparty counterparty;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Column(name = "invoice_items")
     @JoinColumn(name = "invoice_id")
     private List<InvoiceItem> invoiceItems;
@@ -35,10 +34,20 @@ public class Invoice implements Serializable, Comparable<Invoice>, Comparator<In
     public Invoice() {
     }
     
-    public Invoice(LocalDate date, Counterparty counterparty,
+    public Invoice(Date date, Counterparty counterparty,
                     List<InvoiceItem> invoiceItems) {
         this.date = date;
         this.counterparty = counterparty;
+        this.invoiceItems = invoiceItems;
+    }
+
+    public Invoice(InvoiceBody invoiceBody) {
+        this.date = invoiceBody.getDate();
+        this.counterparty = new Counterparty(invoiceBody.getCounterpartyBody());
+        List<InvoiceItem> invoiceItems = new ArrayList<>();
+        for(InvoiceItemBody invoiceItemBody: invoiceBody.getInvoiceItemBodies()) {
+            invoiceItems.add(new InvoiceItem(invoiceItemBody));
+        }
         this.invoiceItems = invoiceItems;
     }
 
@@ -50,11 +59,11 @@ public class Invoice implements Serializable, Comparable<Invoice>, Comparator<In
         this.id = id;
     }
 
-    public LocalDate getDate() {
+    public Date getDate() {
         return date;
     }
 
-    public void setDate(LocalDate date) {
+    public void setDate(Date date) {
         this.date = date;
     }
 
@@ -84,11 +93,8 @@ public class Invoice implements Serializable, Comparable<Invoice>, Comparator<In
         }
         int comparison = (this.date.getYear() - object.date.getYear());
         if (comparison == 0) {
-            comparison = (this.date.getMonthValue() - object.date.getMonthValue());
-            if (comparison == 0) {
-                comparison = (this.date.getDayOfMonth() - object.date.getDayOfMonth());
+            comparison = (this.date.compareTo(object.date));
             }
-        }
         if (comparison < 0) {
             return -1;
         }

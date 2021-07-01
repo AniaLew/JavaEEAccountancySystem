@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 public class InvoiceItem implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "item_id")
     private int id;
 
@@ -27,7 +27,7 @@ public class InvoiceItem implements Serializable {
 
     @JoinColumn(name = "vat")
     @Enumerated(EnumType.STRING)
-    private Vat vat = Vat.VAT_23;
+    private Vat vat;
 
     public InvoiceItem(String description, int numberOfItems, BigDecimal amount,
                        BigDecimal vatAmount, Vat vat) {
@@ -38,11 +38,19 @@ public class InvoiceItem implements Serializable {
         this.vat = vat;
     }
 
-    public InvoiceItem(String description, int numberOfItems, BigDecimal amount, BigDecimal vatAmount) {
-        new InvoiceItem(description, numberOfItems, amount, vatAmount, Vat.VAT_23);
+    public InvoiceItem(InvoiceItemBody invoiceItemBody) {
+        this.description = invoiceItemBody.getDescription();
+        this.numberOfItems = invoiceItemBody.getNumberOfItems();
+        this.amount = invoiceItemBody.getAmount();
+        this.vatAmount = invoiceItemBody.getVatAmount();
+        this.vat = invoiceItemBody.getVat();
     }
 
     public InvoiceItem() {
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getDescription() {
@@ -63,10 +71,6 @@ public class InvoiceItem implements Serializable {
 
     public Vat getVat() {
         return vat;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public void setDescription(String description) {
@@ -91,12 +95,13 @@ public class InvoiceItem implements Serializable {
 
     @Override
     public String toString() {
-        return "InvoiceItem{ "
-                + "description = " + description + '\''
+        return "InvoiceItem{"
+                + "id = " + id
+                + ", description = " + description + '\''
                 + ", numberOfItems = " + numberOfItems
                 + ", amount= " + amount
                 + ", vatAmount= " + vatAmount
                 + ", VAT = " + vat
-                + '}';
+                + "}";
     }
 }

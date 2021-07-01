@@ -2,8 +2,6 @@ package com.invoicebook.rest;
 
 import com.invoicebook.model.Invoice;
 import com.invoicebook.model.InvoiceBody;
-import com.invoicebook.model.counterparty.Counterparty;
-import com.invoicebook.model.invoice_item.InvoiceItem;
 import com.invoicebook.repository.InvoiceRepository;
 
 import javax.enterprise.context.RequestScoped;
@@ -13,8 +11,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.ArrayList;
+import java.text.ParseException;
 import java.util.List;
+import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -33,8 +32,8 @@ public class InvoiceEndpoint {
 
     @POST
     @Consumes(APPLICATION_JSON)
-    public Response createInvoice(InvoiceBody invoiceBody, @Context UriInfo uriInfo) {
-        Invoice invoice = getInvoice(invoiceBody);
+    public Response createInvoice(InvoiceBody invoiceBody, @Context UriInfo uriInfo) throws ParseException {
+        Invoice invoice = new Invoice(invoiceBody);
         invoiceRepository.create(invoice);
         URI createdUri = uriInfo.getBaseUriBuilder().path(String.valueOf(invoice.getId())).build();
         return Response.created(createdUri).build();
@@ -55,39 +54,51 @@ public class InvoiceEndpoint {
     @Produces(APPLICATION_JSON)
     public Response getInvoice(@PathParam("id") Long id) {
         Invoice invoice = invoiceRepository.findById(id);
-        if (invoice == null) {
-            return Response.status(Response.Status.NO_CONTENT).build();
+        if (Optional.ofNullable(invoice).isPresent()) {
+            return Response.ok(invoice).build();
         }
-        return Response.ok(invoice).build();
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
     @DELETE
     @Path("/{id : \\d+}")
     @Consumes(APPLICATION_JSON)
     public Response deleteInvoice(@PathParam("id") Long id) {
+        if(!invoiceRepository.exists(id)) {
+            return Response.noContent().build();
+        }
         invoiceRepository.delete(id);
-       return Response.noContent().build();
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("/{id : \\d+}")
+    @Consumes(APPLICATION_JSON)
+    public Response updateInvoice(@PathParam("id") Long id, InvoiceBody invoiceBody,
+                                  @Context UriInfo uriInfo) throws ParseException {
+        if(!invoiceRepository.exists(id)) {
+            Invoice invoice = new Invoice(invoiceBody);
+            invoiceRepository.create(invoice);
+            URI uri = uriInfo.getBaseUriBuilder().path(String.valueOf(invoice.getId())).build();
+            return Response.created(uri).build();
+        }
+        invoiceRepository.update(id, invoiceBody);
+        return Response.ok().build();
     }
 
     @GET
-    @Path("/hello")
+    @Path("/count")
     @Produces(APPLICATION_JSON)
-    public String getSomething() {
-        return "Hello in Invoice App";
+    public Response countInvoices() {
+        Long nbOfInvoices = invoiceRepository.countAll();
+        return Response.ok(nbOfInvoices).build();
     }
 
-    private Invoice getInvoice(InvoiceBody invoiceBody) {
-        Counterparty counterparty = new Counterparty(invoiceBody.getCounterparty().getCompanyName(),
-                invoiceBody.getCounterparty().getAddress(),
-                invoiceBody.getCounterparty().getPhoneNumber(),
-                invoiceBody.getCounterparty().getNip(),
-                invoiceBody.getCounterparty().getBankName(),
-                invoiceBody.getCounterparty().getBankNumber());
-        List<InvoiceItem> invoiceItems = new ArrayList<>();
-        for(InvoiceItem invoiceItem: invoiceBody.getInvoiceItems()) {
-            invoiceItems.add(new InvoiceItem(invoiceItem.getDescription(), invoiceItem.getNumberOfItems(),
-                    invoiceItem.getAmount(), invoiceItem.getVatAmount(), invoiceItem.getVat()));
-        }
-        return new Invoice(invoiceBody.getDate(), counterparty,invoiceItems);
+    @GET
+    @Path("/exist/{id : \\d+}")
+    @Produces(APPLICATION_JSON)
+    public Response exist(@PathParam("id") Long id) {
+        boolean exists = invoiceRepository.exists(id);
+        return Response.ok(exists).build();
     }
 }

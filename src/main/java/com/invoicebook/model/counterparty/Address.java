@@ -70,7 +70,6 @@ public class Address implements Serializable {
         if (!(o instanceof Address)) {
             return false;
         }
-
         Address address = (Address) o;
 
         if (!getZipCode().equals(address.getZipCode())) {

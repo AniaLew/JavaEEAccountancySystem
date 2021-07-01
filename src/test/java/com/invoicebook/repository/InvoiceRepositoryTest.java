@@ -2,14 +2,12 @@ package com.invoicebook.repository;
 
 import com.invoicebook.model.Invoice;
 import com.invoicebook.model.InvoiceBody;
-import com.invoicebook.model.counterparty.Counterparty;
-import com.invoicebook.model.invoice_item.InvoiceItem;
 import org.junit.jupiter.api.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
-import java.time.LocalDate;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,16 +41,15 @@ class InvoiceRepositoryTest {
     @Test
     public void shouldCreateAnInvoice() throws Exception {
         //given
-        Invoice invoice = new Invoice(LocalDate.now(), InvoiceProvider.getCounterparty(),
+        Invoice invoice = new Invoice(new Date(), InvoiceProvider.getCounterparty(),
                 InvoiceProvider.getInvoiceItems(2));
         //when
         entityManager.getTransaction().begin();
         repository.create(invoice);
         entityManager.getTransaction().commit();
         //then
-//        assertTrue(entityManager.contains(invoice));
         List<Invoice> invoices = entityManager.createQuery("SELECT i FROM Invoice i").getResultList();
-        assertEquals(invoices.size(), 0);
+        assertEquals(1, invoices.size());
         Invoice invoiceFromDB = invoices.get(0);
         assertThat(invoiceFromDB.getDate())
                 .isNotNull()
@@ -85,7 +82,7 @@ class InvoiceRepositoryTest {
     @Test
     public void shouldFindAnInvoiceById() throws Exception {
         //given
-        Invoice invoice = new Invoice(LocalDate.now(), InvoiceProvider.getCounterparty(),
+        Invoice invoice = new Invoice(new Date(), InvoiceProvider.getCounterparty(),
                 InvoiceProvider.getInvoiceItems(2));
         repository.create(invoice);
         //when
@@ -144,31 +141,25 @@ class InvoiceRepositoryTest {
     @Test
     public void shouldUpdateAnInvoice() throws Exception {
         //given
-        Invoice invoice = new Invoice(LocalDate.now(), InvoiceProvider.getCounterparty(),
+        Invoice invoice = new Invoice(new Date(), InvoiceProvider.getCounterparty(),
                 InvoiceProvider.getInvoiceItems(2));
         repository.create(invoice);
-        Counterparty expectedCounterparty = InvoiceProvider.getCounterparty();
-        List<InvoiceItem> expectedInvoiceItems = InvoiceProvider.getInvoiceItems(2);
-        InvoiceBody invoiceBody = new InvoiceBody(invoice.getDate().plusDays(10),
-                expectedCounterparty, expectedInvoiceItems);
+        InvoiceBody invoiceBody = new InvoiceBody(InvoiceProvider.addDaysToDate(invoice.getDate(), 10),
+                InvoiceProvider.getCounterpartyBody(), InvoiceProvider.getInvoiceItemBodies(2));
         //when
         Invoice actualInvoice = repository.update(invoice.getId(), invoiceBody);
         //then
+        //TODO
         Invoice actualInvoiceDb = repository.findById(actualInvoice.getId());
         assertEquals(invoiceBody.getDate(), actualInvoice.getDate());
-        Assertions.assertEquals(invoiceBody.getCounterparty(), actualInvoice.getCounterparty());
-        assertEquals(invoiceBody.getInvoiceItems(), actualInvoice.getInvoiceItems());
         assertEquals(invoiceBody.getDate(), actualInvoiceDb.getDate());
-        Assertions.assertEquals(invoiceBody.getCounterparty(), actualInvoiceDb.getCounterparty());
-        assertEquals(invoiceBody.getInvoiceItems(), actualInvoiceDb.getInvoiceItems());
     }
 
     @Test
     public void shouldThrowExceptionWhenUpdateInvoiceWithNullId() {
         //given
-        Counterparty expectedCounterparty = InvoiceProvider.getCounterparty();
-        List<InvoiceItem> expectedInvoiceItems = InvoiceProvider.getInvoiceItems(2);
-        InvoiceBody invoiceBody = new InvoiceBody(LocalDate.now(), expectedCounterparty, expectedInvoiceItems);
+        InvoiceBody invoiceBody = new InvoiceBody(new Date(), InvoiceProvider.getCounterpartyBody(),
+                InvoiceProvider.getInvoiceItemBodies(2));
         //then
         Exception exception = assertThrows(Exception.class,
                 () -> repository.update(null, invoiceBody));
@@ -179,7 +170,7 @@ class InvoiceRepositoryTest {
     @Test
     public void shouldThrowExceptionWhenUpdateInvoiceWithInvalidNullBody() {
         //given
-        Invoice invoice = new Invoice(LocalDate.now(), InvoiceProvider.getCounterparty(),
+        Invoice invoice = new Invoice(new Date(), InvoiceProvider.getCounterparty(),
                 InvoiceProvider.getInvoiceItems(2));
         entityManager.persist(invoice);
         //when
@@ -200,7 +191,6 @@ class InvoiceRepositoryTest {
                 .contains("Unable to find");
     }
 
-
     @Test
     public void shouldCountAllInvoices() throws Exception {
         //given
@@ -216,7 +206,7 @@ class InvoiceRepositoryTest {
 
     @AfterEach
     public void closeEntityManager() {
-        clearDatabase();
+//        clearDatabase();
         entityManager.close();
     }
 

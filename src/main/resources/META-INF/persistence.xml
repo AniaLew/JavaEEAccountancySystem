@@ -10,12 +10,13 @@
         <class>com.invoicebook.model.invoice_item.InvoiceItem</class>
         <class>com.invoicebook.model.invoice_item.Vat</class>
         <class>com.invoicebook.model.counterparty.Address</class>
+        <class>com.invoicebook.model.counterparty.Counterparty</class>
         <class>com.invoicebook.model.Invoice</class>
 
         <properties>
             <property name="javax.persistence.jdbc.driver" value="org.h2.Driver" />
-            <!--            <property name="javax.persistence.jdbc.url"    value="jdbc:h2:mem:test" />-->
-            <property name="javax.persistence.jdbc.url"    value="jdbc:h2:file:C:/database/invoicebook-test" />
+                        <property name="javax.persistence.jdbc.url"    value="jdbc:h2:mem:test" />
+<!--            <property name="javax.persistence.jdbc.url"    value="jdbc:h2:file:C:/database/invoicebook-test" />-->
             <property name="javax.persistence.jdbc.user" value="sa" />
             <property name="javax.persistence.jdbc.password" value="sa" />
             <property name="hibernate.max_fetch_depth" value="3" />

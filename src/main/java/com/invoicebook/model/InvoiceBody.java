@@ -1,42 +1,68 @@
 package com.invoicebook.model;
 
-import com.invoicebook.model.counterparty.Counterparty;
-import com.invoicebook.model.invoice_item.InvoiceItem;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.invoicebook.model.counterparty.CounterpartyBody;
+import com.invoicebook.model.invoice_item.InvoiceItemBody;
 
-import javax.json.bind.annotation.JsonbDateFormat;
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 public class InvoiceBody implements Serializable {
 
-        @JsonbDateFormat(value = "yyyy-MM-dd")
-        private LocalDate date;
-        private Counterparty counterparty;
-        private List<InvoiceItem> invoiceItems;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private Date date;
+    private CounterpartyBody counterpartyBody;
+    private List<InvoiceItemBody> invoiceItemBodies;
 
-        public InvoiceBody() {
-        }
-
-        public InvoiceBody(Counterparty counterparty, List<InvoiceItem> invoiceItems) {
-            new InvoiceBody(LocalDate.now(), counterparty, invoiceItems);
-        }
-
-    public InvoiceBody(LocalDate date, Counterparty counterparty, List<InvoiceItem> invoiceItems) {
+    public InvoiceBody(Date date, CounterpartyBody counterpartyBody, List<InvoiceItemBody> invoiceItemBodies) {
         this.date = date;
-        this.counterparty = counterparty;
-        this.invoiceItems = invoiceItems;
+        this.counterpartyBody = counterpartyBody;
+        this.invoiceItemBodies = invoiceItemBodies;
     }
 
-    public LocalDate getDate() {
-            return date;
-        }
+    public InvoiceBody() {
+    }
 
-        public Counterparty getCounterparty() {
-            return counterparty;
-        }
+    public Date getDate() {
+        return date;
+    }
 
-        public List<InvoiceItem> getInvoiceItems() {
-            return invoiceItems;
-        }
+    public CounterpartyBody getCounterpartyBody() {
+        return counterpartyBody;
+    }
+
+    @JsonBackReference
+    public List<InvoiceItemBody> getInvoiceItemBodies() {
+        return invoiceItemBodies;
+    }
+
+    public InvoiceBody setDate(Date date) {
+        this.date = date;
+        return this;
+    }
+
+    public InvoiceBody setCounterpartyBody(CounterpartyBody counterpartyBody) {
+        this.counterpartyBody = counterpartyBody;
+        return this;
+    }
+
+    public InvoiceBody setInvoiceItemBodies(List<InvoiceItemBody> invoiceItemBodies) {
+        this.invoiceItemBodies = invoiceItemBodies;
+        return this;
+    }
+
+    public InvoiceBody getInvoiceBody() {
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "InvoiceBody{" +
+                "date=" + date +
+                ", counterpartyBody=" + counterpartyBody +
+                ", invoiceItemBodies=" + invoiceItemBodies +
+                '}';
+    }
 }
