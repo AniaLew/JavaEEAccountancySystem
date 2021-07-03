@@ -13,6 +13,7 @@ import io.restassured.path.json.mapper.factory.Jackson2ObjectMapperFactory;
 import org.junit.jupiter.api.*;
 
 import java.lang.reflect.Type;
+import java.text.ParseException;
 
 import static org.hamcrest.Matchers.*;
 
@@ -37,7 +38,6 @@ class InvoiceEndpointTest implements  StatusCodes{
 
     @Test
     public void shouldUseGlobalConstants() {
-
         RestAssured
                 .given()
                 .log().all()
@@ -56,7 +56,6 @@ class InvoiceEndpointTest implements  StatusCodes{
                 .then()
                 .statusCode(OK)
                 .body(emptyOrNullString());
-
     }
 
     @Test
@@ -82,26 +81,26 @@ class InvoiceEndpointTest implements  StatusCodes{
                     .post()
                 .then()
                     .statusCode(CREATED);
-
         RestAssured.delete( String.valueOf(counter - 1));
     }
 
     @Test
     public void shouldDeleteExistingInvoice() {
+        System.out.println(counter);
         RestAssured
                 .when()
-                .delete( String.valueOf(counter))
+                .delete(RestAssured.baseURI + RestAssured.basePath +  String.valueOf(counter))
                 .then()
-                .statusCode(OK);
+                .statusCode(NO_CONTENT);
     }
 
     @Test
-    public void shouldDeleteNonExistingInvoice() {
+    public void shouldReturnNoContentWhenDeletingNonExistingInvoice() {
         RestAssured
                 .when()
-                .delete(  "100")
+                .delete(  RestAssured.baseURI + RestAssured.basePath +  "100")
                 .then()
-                .statusCode(NO_CONTENT);
+                .statusCode(NOT_FOUND);
     }
 
      @Test
@@ -131,7 +130,7 @@ class InvoiceEndpointTest implements  StatusCodes{
     }
 
     @Test
-    void getInvoices() {
+    void shouldGetInvoices() {
         counter++;
         RestAssured
                 .given()
@@ -146,13 +145,27 @@ class InvoiceEndpointTest implements  StatusCodes{
                 .body("date", hasItem("2021-06-23"))
                 .body("counterparty.id",notNullValue())
                 .body("invoiceItems.vat[0]", hasItem(startsWith("vat")));
-
         RestAssured.delete( String.valueOf(counter - 1));
     }
 
     @Test
-    void updateInvoice() {
-//        counter = 4;
+    void shouldGetInvoicesInDateRange() throws ParseException {
+        counter++;
+        RestAssured
+                .given()
+                .header("Content-type", "application/json")
+                .body(InvoiceProvider.getJsonInvoiceBodyForPutMethod())
+                .post();
+
+        RestAssured
+                .when()
+                .get(RestAssured.baseURI + RestAssured.basePath + "date?from=2021-12-12&to=2021-12-12")
+                .then()
+                .statusCode(OK);
+    }
+
+    @Test
+    void ShouldUpdateInvoice() {
         System.out.println(counter);
         RestAssured.given()
                 .contentType(ContentType.JSON)

@@ -7,15 +7,15 @@ import org.junit.jupiter.api.*;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.invoicebook.appsettings.AppConfig.PERSISTENCE_UNIT;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class InvoiceRepositoryTest {
     private static EntityManagerFactory entityManagerFactory;
@@ -30,7 +30,7 @@ class InvoiceRepositoryTest {
     @BeforeEach
     public void setRepository() {
         entityManager = entityManagerFactory.createEntityManager();
-        repository = new InvoiceRepository(entityManagerFactory.createEntityManager());
+        repository = new InvoiceRepository(entityManager);
     }
 
     @Test
@@ -49,7 +49,7 @@ class InvoiceRepositoryTest {
         entityManager.getTransaction().commit();
         //then
         List<Invoice> invoices = entityManager.createQuery("SELECT i FROM Invoice i").getResultList();
-        assertEquals(1, invoices.size());
+        assertEquals(invoices.size(), 1);
         Invoice invoiceFromDB = invoices.get(0);
         assertThat(invoiceFromDB.getDate())
                 .isNotNull()
@@ -84,11 +84,13 @@ class InvoiceRepositoryTest {
         //given
         Invoice invoice = new Invoice(new Date(), InvoiceProvider.getCounterparty(),
                 InvoiceProvider.getInvoiceItems(2));
-        repository.create(invoice);
+        entityManager.getTransaction().begin();
+        entityManager.persist(invoice);
+        entityManager.getTransaction().commit();
         //when
         Invoice actualInvoice = repository.findById(invoice.getId());
         //then
-        assertSame(invoice, actualInvoice);
+        assertSame(invoice.getCounterparty(), actualInvoice.getCounterparty());
         Invoice invoiceFromDatabase = entityManager.getReference(Invoice.class, actualInvoice.getId());
         assertSame(invoice.getInvoiceItems(), invoiceFromDatabase.getInvoiceItems());
     }
@@ -97,15 +99,17 @@ class InvoiceRepositoryTest {
     public void shouldFindAllInvoices() throws Exception {
         //given
         List<Invoice> invoices = InvoiceProvider.getInvoices(5);
+        entityManager.getTransaction().begin();
         for (Invoice invoice : invoices) {
-            repository.create(invoice);
+            entityManager.persist(invoice);
         }
+        entityManager.getTransaction().commit();
         //when
         List<Invoice> actualInvoices = repository.findAll();
         //then
         assertEquals(invoices.size(), actualInvoices.size());
         assertArrayEquals(invoices.toArray(), actualInvoices.toArray());
-        List<Invoice> invoicesFromDb =entityManager
+        List<Invoice> invoicesFromDb = entityManager
                 .createQuery("SELECT i FROM Invoice i ORDER BY i.date", Invoice.class)
                 .getResultList();
         assertArrayEquals(invoices.toArray(), invoicesFromDb.toArray());
@@ -115,16 +119,20 @@ class InvoiceRepositoryTest {
     public void shouldDeleteAnInvoiceById() throws Exception {
         //given
         List<Invoice> invoices = InvoiceProvider.getInvoices(5);
+        entityManager.getTransaction().begin();
         for (Invoice invoice : invoices) {
-            repository.create(invoice);
+            entityManager.persist(invoice);
         }
+        entityManager.getTransaction().commit();
         //when
+        entityManager.getTransaction().begin();
         repository.delete(invoices.get(0).getId());
+        entityManager.getTransaction().commit();
         //then
-        List<Invoice> expectedInvoices =entityManager
-                .createQuery("SELECT i FROM Invoice i ORDER BY i.date", Invoice.class)
-                .getResultStream()
-                .collect(Collectors.toList());;
+        List<Invoice> expectedInvoices = entityManager
+                .createQuery("SELECT i FROM Invoice i", Invoice.class)
+                .getResultList()
+        ;
         assertEquals(invoices.size() - expectedInvoices.size(), 1);
         assertFalse(expectedInvoices.contains(invoices.get(0)));
     }
@@ -143,13 +151,14 @@ class InvoiceRepositoryTest {
         //given
         Invoice invoice = new Invoice(new Date(), InvoiceProvider.getCounterparty(),
                 InvoiceProvider.getInvoiceItems(2));
-        repository.create(invoice);
+        entityManager.getTransaction().begin();
+        entityManager.persist(invoice);
+        entityManager.getTransaction().commit();
         InvoiceBody invoiceBody = new InvoiceBody(InvoiceProvider.addDaysToDate(invoice.getDate(), 10),
                 InvoiceProvider.getCounterpartyBody(), InvoiceProvider.getInvoiceItemBodies(2));
         //when
         Invoice actualInvoice = repository.update(invoice.getId(), invoiceBody);
         //then
-        //TODO
         Invoice actualInvoiceDb = repository.findById(actualInvoice.getId());
         assertEquals(invoiceBody.getDate(), actualInvoice.getDate());
         assertEquals(invoiceBody.getDate(), actualInvoiceDb.getDate());
@@ -169,44 +178,128 @@ class InvoiceRepositoryTest {
 
     @Test
     public void shouldThrowExceptionWhenUpdateInvoiceWithInvalidNullBody() {
-        //given
-        Invoice invoice = new Invoice(new Date(), InvoiceProvider.getCounterparty(),
-                InvoiceProvider.getInvoiceItems(2));
-        entityManager.persist(invoice);
-        //when
-        Exception exception = assertThrows(Exception.class,
-                () -> repository.update(invoice.getId(), null));
-        //then
-        assertThat(exception).isNotNull();
-    }
-
-    @Test
-    public void shouldThrowExceptionWhenUpdateInvoiceWithInvalidId() {
         //when
         Exception exception = assertThrows(Exception.class,
                 () -> repository.update(1L, null));
         //then
-        assertThat(exception.getMessage())
-                .isNotNull()
-                .contains("Unable to find");
+        assertThat(exception).isNotNull();
     }
 
     @Test
     public void shouldCountAllInvoices() throws Exception {
         //given
         List<Invoice> invoices = InvoiceProvider.getInvoices(5);
+        entityManager.getTransaction().begin();
         for (Invoice invoice : invoices) {
-            repository.create(invoice);
+            entityManager.persist(invoice);
         }
+        entityManager.getTransaction().commit();
         //when
         Long expectedNumber = repository.countAll();
         //then
-        assertEquals(invoices.size(), expectedNumber);
+        assertEquals(expectedNumber, invoices.size());
+    }
+
+    @Test
+    public void shouldFindInvoicesFromGivenDateRange() throws ParseException {
+        //given
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        Date dateTo = formatter.parse("2021-06-20");
+        Date dateFrom = formatter.parse("2021-01-20");
+        Date date3 = formatter.parse("2021-03-20");
+        Date date4 = formatter.parse("2020-03-20");
+        Date date5 = formatter.parse("2022-03-20");
+        Invoice invoice1 = new Invoice(dateTo, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice2 = new Invoice(dateFrom, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice3 = new Invoice(date3, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice4 = new Invoice(date4, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice5 = new Invoice(date5, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        entityManager.getTransaction().begin();
+        entityManager.persist(invoice1);
+        entityManager.persist(invoice2);
+        entityManager.persist(invoice3);
+        entityManager.persist(invoice4);
+        entityManager.persist(invoice5);
+        entityManager.getTransaction().commit();
+        //when
+        List<Invoice> invoices = repository.findInvoicesByDate(dateFrom, dateTo);
+        //then
+        assertEquals(3, invoices.size());
+    }
+
+    @Test
+    public void shouldFindInvoicesFromDateToDate() throws ParseException {
+        //given
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        Date date3 = formatter.parse("2021-03-20");
+        Date date4 = formatter.parse("2020-03-20");
+        Date date5 = formatter.parse("2022-03-20");
+        Date dateTo = formatter.parse("2021-06-20");
+        Date dateFrom = formatter.parse("2021-01-20");
+        Invoice invoice1 = new Invoice(dateTo, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice2 = new Invoice(dateFrom, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice3 = new Invoice(date3, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice4 = new Invoice(date4, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice5 = new Invoice(date5, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        entityManager.getTransaction().begin();
+        entityManager.persist(invoice1);
+        entityManager.persist(invoice2);
+        entityManager.persist(invoice3);
+        entityManager.persist(invoice4);
+        entityManager.persist(invoice5);
+        entityManager.getTransaction().commit();
+        //when
+        List<Invoice> invoices = repository.findInvoicesFromDateToDate(dateFrom, dateTo);
+        //then
+        assertEquals(3, invoices.size());
+    }
+
+    @Test
+    public void shouldFindInvoicesFromOneDate() throws ParseException {
+        //given
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        Date date3 = formatter.parse("2021-03-20");
+        Date date4 = formatter.parse("2020-03-20");
+        Date date5 = formatter.parse("2022-03-20");
+        Date dateFrom = formatter.parse("2021-01-20");
+        Invoice invoice1 = new Invoice(dateFrom, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice2 = new Invoice(dateFrom, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice3 = new Invoice(date3, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice4 = new Invoice(date4, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        Invoice invoice5 = new Invoice(date5, InvoiceProvider.getCounterparty(),
+                InvoiceProvider.getInvoiceItems(2));
+        entityManager.getTransaction().begin();
+        entityManager.persist(invoice1);
+        entityManager.persist(invoice2);
+        entityManager.persist(invoice3);
+        entityManager.persist(invoice4);
+        entityManager.persist(invoice5);
+        entityManager.getTransaction().commit();
+        //when
+        List<Invoice> invoices = repository.findInvoicesByDate(dateFrom, dateFrom);
+        //then
+        assertEquals(2, invoices.size());
+        assertEquals(dateFrom, invoices.get(0).getDate());
+        assertEquals(dateFrom, invoices.get(1).getDate());
     }
 
     @AfterEach
     public void closeEntityManager() {
-//        clearDatabase();
+        clearDatabase();
         entityManager.close();
     }
 
@@ -221,7 +314,7 @@ class InvoiceRepositoryTest {
             entityManager.getTransaction().begin();
             Iterator<Invoice> invoiceIterator = invoices.iterator();
             while (invoiceIterator.hasNext()) {
-                repository.delete(invoiceIterator.next().getId());
+                entityManager.remove(entityManager.getReference(Invoice.class, invoiceIterator.next().getId()));
             }
             entityManager.getTransaction().commit();
         } finally {

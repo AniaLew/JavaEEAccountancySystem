@@ -12,6 +12,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,7 +47,7 @@ public class InvoiceRepository implements CrudOperations {
     @Override
     public List<Invoice> findAll() {
         return entityManager
-                .createQuery("SELECT i FROM Invoice i ORDER BY i.date", Invoice.class)
+                .createQuery("SELECT i FROM Invoice i", Invoice.class)
                 .getResultList();
     }
 
@@ -88,5 +89,22 @@ public class InvoiceRepository implements CrudOperations {
         return Optional
                 .ofNullable(invoice)
                 .isPresent();
+    }
+
+    public List<Invoice> findInvoicesByDate(Date dateFrom, Date dateTo) {
+        return entityManager
+                .createQuery("SELECT i FROM Invoice i WHERE i.date >= :dateFrom AND i.date <= :dateTo ORDER BY i.date", Invoice.class)
+                .setParameter("dateFrom", dateFrom)
+                .setParameter("dateTo", dateTo)
+                .getResultList();
+    }
+
+    public List<Invoice> findInvoicesFromDateToDate(Date dateFrom, Date dateTo) {
+        List<Invoice> invoices = entityManager
+                .createQuery("SELECT i FROM Invoice i", Invoice.class)
+                .getResultList();
+        invoices.removeIf(invoice -> invoice.getDate().before(dateFrom));
+        invoices.removeIf(invoice -> invoice.getDate().after(dateTo));
+        return invoices;
     }
 }

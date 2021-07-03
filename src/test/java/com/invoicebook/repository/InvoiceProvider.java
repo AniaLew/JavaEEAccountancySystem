@@ -134,5 +134,4 @@ public class InvoiceProvider {
                 "                  \"vat\": \"vat_23\"}]" +
                 "}";
     }
-
 }
