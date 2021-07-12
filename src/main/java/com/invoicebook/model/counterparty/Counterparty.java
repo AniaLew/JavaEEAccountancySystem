@@ -1,56 +1,64 @@
-package com.example.javaee_jpa_hibernate.model.counterparty;
+package com.invoicebook.model.counterparty;
 
-import com.example.javaee_jpa_hibernate.model.Invoice;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.invoicebook.model.Invoice;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
 @Entity
-@Table(name = "COUNTERPARTY")
 public class Counterparty implements Serializable {
     @Id
-    @Column(name = "COUNTERPARTY_ID")
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "company_id")
     private int id;
 
-    @Column(name = "NIP")
-    @NotEmpty(message = "NIP cannot be empty")
+    @Column(name = "nip")
     private String nip;
 
-    @Column(name = "COMPANY_NAME")
-    @NotEmpty(message = "NIP cannot be empty")
+    @Column(name = "company_name")
     private String companyName;
 
-    @Column(name = "PHONE_NUMBER")
+    @Column(name = "phone_number")
     private String phoneNumber;
 
-    @NotEmpty(message = "NIP cannot be empty")
-    @Column(name = "BANK_NAME")
+    @Column(name = "bank_name")
     private String bankName;
 
-    @Column(name = "BANK_NUMBER")
+    @Column(name = "bank_number")
     @NotEmpty(message = "NIP cannot be empty")
     private String bankNumber;
 
     @Embedded
-    @NotNull(message = "Address cannot be NULL")
+    @AttributeOverride(name="zipCode", column = @Column(name="zip_code"))
+    @AttributeOverride(name = "townName", column = @Column(name = "town_name"))
+    @AttributeOverride(name = "streetName", column = @Column(name = "street_name"))
+    @AttributeOverride(name = "houseNumber", column = @Column(name = "house_number"))
     private Address address;
 
     @OneToMany(mappedBy = "counterparty", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Invoice> invoices;
 
     public Counterparty(String companyName, Address address, String phoneNumber, String nip,
-                        String bankName,
-                        String bankNumber) {
+                        String bankName, String bankNumber) {
         this.companyName = companyName;
         this.address = address;
         this.phoneNumber = phoneNumber;
         this.nip = nip;
         this.bankName = bankName;
         this.bankNumber = bankNumber;
+    }
+
+    public Counterparty(CounterpartyBody counterpartyBody) {
+        this.companyName = counterpartyBody.getCompanyName();
+        this.address = counterpartyBody.getAddress();
+        this.phoneNumber = counterpartyBody.getPhoneNumber();
+        this.nip = counterpartyBody.getNip();
+        this.bankName = counterpartyBody.getBankName();
+        this.bankNumber = counterpartyBody.getBankNumber();
     }
 
     public Counterparty() {

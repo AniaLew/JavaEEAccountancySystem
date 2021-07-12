@@ -1,39 +1,33 @@
-package com.example.javaee_jpa_hibernate.model.invoice_item;
-
-import com.example.javaee_jpa_hibernate.model.Invoice;
+package com.invoicebook.model.invoice_item;
 
 import javax.persistence.*;
-import javax.validation.constraints.Min;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Entity
-public class InvoiceItem {
+@Table(name = "invoice_items")
+public class InvoiceItem implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "ITEM_ID")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "item_id")
     private int id;
 
-    @Column(name = "DESCRIPTION")
+    @Column(name = "description")
     private String description;
 
-    @Min(value = 1, message = "There need to be at least one item" )
-    @Column(name = "NUMBER_OF_ITEMS")
+    @Column(name = "number_of_items")
     private int numberOfItems;
 
-    @Column(name = "AMOUNT")
-    private BigDecimal amount = new BigDecimal(0);
+    @Column(name = "amount")
+    private BigDecimal amount;
 
-    @Column(name = "VAT_AMOUNT")
-    private BigDecimal vatAmount = new BigDecimal(0);
+    @Column(name = "vat_amount")
+    private BigDecimal vatAmount;
 
-    @JoinColumn(name = "VAT", referencedColumnName = "VAT_CODE")
-    @Enumerated(EnumType.ORDINAL)
-    private Vat vat = Vat.VAT_23;
-
-    @ManyToOne
-    @JoinColumn(name = "invoice_id", nullable = false)
-    private Invoice invoice;
+    @JoinColumn(name = "vat")
+    @Enumerated(EnumType.STRING)
+    private Vat vat;
 
     public InvoiceItem(String description, int numberOfItems, BigDecimal amount,
                        BigDecimal vatAmount, Vat vat) {
@@ -44,15 +38,19 @@ public class InvoiceItem {
         this.vat = vat;
     }
 
+    public InvoiceItem(InvoiceItemBody invoiceItemBody) {
+        this.description = invoiceItemBody.getDescription();
+        this.numberOfItems = invoiceItemBody.getNumberOfItems();
+        this.amount = invoiceItemBody.getAmount();
+        this.vatAmount = invoiceItemBody.getVatAmount();
+        this.vat = invoiceItemBody.getVat();
+    }
+
     public InvoiceItem() {
     }
 
-    public Invoice getInvoice() {
-        return invoice;
-    }
-
-    public void setInvoice(Invoice invoice) {
-        this.invoice = invoice;
+    public int getId() {
+        return id;
     }
 
     public String getDescription() {
@@ -73,10 +71,6 @@ public class InvoiceItem {
 
     public Vat getVat() {
         return vat;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public void setDescription(String description) {
@@ -101,12 +95,13 @@ public class InvoiceItem {
 
     @Override
     public String toString() {
-        return "InvoiceItem{ "
-                + "description = " + description + '\''
+        return "InvoiceItem{"
+                + "id = " + id
+                + ", description = " + description + '\''
                 + ", numberOfItems = " + numberOfItems
                 + ", amount= " + amount
                 + ", vatAmount= " + vatAmount
                 + ", VAT = " + vat
-                + '}';
+                + "}";
     }
 }
